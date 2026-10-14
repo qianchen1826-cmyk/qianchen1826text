@@ -94,11 +94,11 @@ set search_path = public
 as $$
 begin
   return query
-  update public.access_codes
-  set used_count = used_count + 1
-  where access_codes.code = upper(trim(p_code))
-    and used_count < max_uses
-  returning code, max_uses - used_count;
+  update public.access_codes as ac
+  set used_count = ac.used_count + 1
+  where ac.code = upper(trim(p_code))
+    and ac.used_count < ac.max_uses
+  returning ac.code, ac.max_uses - ac.used_count;
 end;
 $$;
 
@@ -129,7 +129,9 @@ begin
 
   for i in 1..requested_count loop
     loop
-      new_code := prefix_value || upper(encode(gen_random_bytes(6), 'hex'));
+      -- Use PostgreSQL's UUID generator so code creation does not depend on
+      -- pgcrypto's gen_random_bytes search path.
+      new_code := prefix_value || replace(substr(upper(gen_random_uuid()::text), 1, 18), '-', '');
       exit when not exists (
         select 1 from public.access_codes where access_codes.code = new_code
       );
