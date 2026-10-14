@@ -5,8 +5,8 @@
  * database permissions are protected by RLS. Never put a service-role key here.
  */
 window.APP_CONFIG = window.APP_CONFIG || {
-  supabaseUrl: "",
-  supabaseAnonKey: "",
+  supabaseUrl: "https://ysvxxzvwnzrramdfgnwc.supabase.co",
+  supabaseAnonKey: "sb_publishable_xtYBhBNfHyie4ZELb3K4tA_x1HjJe1d",
 };
 
 window.getSupabaseClient = function getSupabaseClient() {
