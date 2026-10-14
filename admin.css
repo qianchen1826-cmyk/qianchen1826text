@@ -1,0 +1,37 @@
+@import url("styles.css");
+
+body.admin-page {
+  background: #f5f8f5;
+}
+
+.admin-page .app-shell {
+  min-height: 100vh;
+}
+
+.admin-page main {
+  padding-top: 64px;
+}
+
+.admin-page .brand {
+  pointer-events: none;
+}
+
+.admin-page .admin-login-card {
+  margin-top: 35px;
+}
+
+.admin-page .session-email {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.admin-page .danger-button {
+  color: #a34d42;
+  border-color: #e8c4bd;
+}
+
+@media (max-width: 600px) {
+  .admin-page main {
+    padding-top: 40px;
+  }
+}

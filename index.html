@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b8066" />
+    <meta name="description" content="副业试跑站：用更少的问题，找到适合你的职业与副业第一步。" />
+    <title>副业试跑站 | 找到适合你的第一步</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" data-nav="home" aria-label="副业试跑站首页">
+          <span class="brand-mark">试</span>
+          <span><strong>副业试跑站</strong><small>先试 7 天，再决定要不要继续</small></span>
+        </a>
+        <nav class="topnav" aria-label="主导航">
+          <button class="nav-link active" data-nav="home">开始测试</button>
+          <button class="nav-link" data-nav="projects">项目库</button>
+          <button class="nav-link" data-nav="principles">产品原则</button>
+        </nav>
+        <div class="topbar-note"><span class="live-dot"></span> 测评码每个可使用 2 次</div>
+      </header>
+
+      <main>
+        <section id="home-view" class="view active-view">
+          <div class="hero-grid">
+            <div class="hero-copy">
+              <p class="eyebrow">SIDE-HUSTLE & CAREER CHECK</p>
+              <h1>别急着找项目，<br /><em>先找到适合你的第一步。</em></h1>
+              <p class="hero-lede">
+                面向大三大四学生、初入职场者、想做副业的人和准备转行的人。回答一组和你当前阶段有关的问题，获得一份更贴近现实的方向报告。
+              </p>
+              <div class="hero-proof">
+                <span><b>约 3</b>分钟完成</span>
+                <span><b>13-16</b>道分流题</span>
+                <span><b>2</b>次测评机会</span>
+              </div>
+              <button class="primary-button hero-start" data-action="start">
+                <span>输入测评码开始</span><span class="button-arrow">→</span>
+              </button>
+              <p class="microcopy">结果仅作职业探索和副业试跑建议，不承诺收入，也不构成就业、投资或心理诊断。</p>
+            </div>
+            <div class="hero-visual" aria-label="测评结果预览">
+              <div class="visual-topline"><span>你的方向报告会包含</span><span class="status-chip">BETA</span></div>
+              <div class="visual-score">
+                <div><small>结果示例</small><strong>作品突围者</strong><p>先做 3 个作品，再决定投递方向</p></div>
+                <div class="score-ring"><span>84</span><small>/100</small></div>
+              </div>
+              <div class="visual-bars">
+                <div class="bar-row"><span>已有能力</span><i><b style="width: 84%"></b></i><strong>84</strong></div>
+                <div class="bar-row"><span>现实资源</span><i><b style="width: 72%"></b></i><strong>72</strong></div>
+                <div class="bar-row"><span>行动可行</span><i><b style="width: 91%"></b></i><strong>91</strong></div>
+              </div>
+              <div class="visual-task"><span class="task-check">✓</span><div><small>报告下一步</small><strong>完成一个能展示的真实样例</strong></div><span class="task-arrow">↗</span></div>
+              <div class="visual-stamp">先试<br /><b>7</b>天</div>
+            </div>
+          </div>
+
+          <section class="info-band">
+            <div><span class="info-number">01</span><div><strong>先判断你现在在哪</strong><p>学生、上班族、转行者和自由职业探索者，不会被同一套问题粗暴对待。</p></div></div>
+            <div><span class="info-number">02</span><div><strong>再看你手上有什么</strong><p>结果会结合技能、时间、设备、预算和沟通边界，而不只看兴趣。</p></div></div>
+            <div><span class="info-number">03</span><div><strong>最后给你能执行的第一步</strong><p>最多推荐 3 个方向和 7 天试跑建议，项目链接功能后续接入。</p></div></div>
+          </section>
+        </section>
+
+        <section id="quiz-view" class="view">
+          <div class="quiz-shell">
+            <div class="quiz-top">
+              <div><p class="eyebrow">ADAPTIVE CHECK</p><h1>回答和你有关的问题。</h1><p>根据你的身份和选择，后续题目会自动变化。大约需要 3 分钟。</p></div>
+              <button class="ghost-button" data-action="quit">退出测试</button>
+            </div>
+            <div class="quiz-panel">
+              <div class="quiz-progress"><div><span id="question-count">第 1 题</span><strong id="progress-label">先了解你的阶段</strong></div><div class="progress-track"><b id="progress-bar"></b></div></div>
+              <div id="question-area"></div>
+              <div class="quiz-actions"><button class="ghost-button" id="prev-button" type="button">← 上一题</button><button class="primary-button" id="next-button" type="button">下一题 →</button></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="result-view" class="view">
+          <div id="result-capture" class="result-capture">
+            <div class="result-header">
+              <div><p class="eyebrow">YOUR DIRECTION REPORT</p><h1>这份结果，先拿去试 7 天。</h1><p>结果结合了你的阶段、回答、能力倾向和当前资源。</p></div>
+              <div class="result-code">副业试跑站<br /><b>方向报告</b></div>
+            </div>
+            <div class="result-layout">
+              <div class="result-main"><article class="recommendation-card" id="primary-result"></article><div class="section-heading compact-heading"><div><p class="eyebrow">WHY THIS FITS</p><h2>你现在真正拥有的东西</h2></div></div><div class="evidence-grid" id="evidence-grid"></div><div class="section-heading compact-heading"><div><p class="eyebrow">YOUR OPTIONS</p><h2>接下来可以试的方向</h2></div></div><div class="secondary-results" id="secondary-results"></div></div>
+              <aside class="result-side"><div class="side-card"><div class="side-card-title"><span>你的现实标签</span><span class="mini-badge">REPORT</span></div><div id="profile-summary"></div></div><div class="side-card warning-card"><span class="warning-label">先避开这些坑</span><ul id="risk-list"></ul></div></aside>
+            </div>
+            <section class="run-section"><div class="section-heading compact-heading"><div><p class="eyebrow">7-DAY TRYOUT</p><h2>你的 7 天第一步</h2></div><span class="completion-label" id="completion-label">0 / 7 已完成</span></div><div class="run-progress"><b id="run-progress-bar"></b></div><div class="day-grid" id="day-grid"></div></section>
+            <div class="result-disclaimer">本报告用于自我探索和低风险尝试。项目推荐不代表收入承诺，涉及收费、推广、软件或资料时请自行核验来源、版权和平台规则。</div>
+          </div>
+          <div class="result-actions"><button class="primary-button" data-action="save-image">保存结果长图</button><button class="secondary-button" data-action="copy-link">复制结果链接</button><button class="ghost-button" data-action="restart">再测一次</button><button class="ghost-button" data-action="feedback">体验反馈</button></div>
+        </section>
+
+        <section id="projects-view" class="view">
+          <div class="result-header project-header"><div><p class="eyebrow">TRYOUT LIBRARY</p><h1>先看清楚，再决定要不要试。</h1><p>这里先展示适合小成本验证的方向，百度网盘和具体资料入口后续从后台配置。</p></div><div class="project-count"><strong>08</strong><span>个方向<br />正在整理</span></div></div>
+          <div class="filter-row" role="group" aria-label="项目筛选"><button class="filter-button active" data-filter="全部">全部</button><button class="filter-button" data-filter="低成本">低成本</button><button class="filter-button" data-filter="手机可做">手机可做</button><button class="filter-button" data-filter="技能服务">技能服务</button></div>
+          <div class="project-grid" id="project-grid"></div>
+        </section>
+
+        <section id="principles-view" class="view">
+          <div class="principle-layout"><div><p class="eyebrow">PRODUCT PRINCIPLES</p><h1>我们不替你承诺收入，<br /><em>只帮你把第一步变清楚。</em></h1><p class="hero-lede">这是一份职业和副业方向探索工具。测试结果不是职业结论，项目卡片也不构成收益承诺。</p></div><div class="principle-list"><article><span>01</span><div><h3>先试，再付费</h3><p>优先推荐可免费验证的动作，不鼓励一开始购买高价课程或加盟项目。</p></div></article><article><span>02</span><div><h3>把风险写在前面</h3><p>每个方向都会展示投入、难度、周期和需要警惕的事项。</p></div></article><article><span>03</span><div><h3>结果可以被推翻</h3><p>测评只是起点，真实反馈比一份看起来准确的标签更重要。</p></div></article></div></div>
+        </section>
+
+      </main>
+
+      <footer class="site-footer"><span>副业试跑站 · 第一版自适应测评原型</span><span>仅作信息整理与自我探索，不构成就业、投资或收益承诺</span></footer>
+    </div>
+
+    <div class="modal-backdrop" id="code-modal" aria-hidden="true">
+      <div class="modal-card access-card" role="dialog" aria-modal="true" aria-labelledby="code-title">
+        <button class="modal-close" data-action="close-modal" aria-label="关闭">×</button>
+        <p class="eyebrow">ACCESS CODE</p><h2 id="code-title">输入你的测评码</h2><p>每个测评码可完成 2 次测试，使用次数由服务器统一记录。</p>
+        <label class="field-label" for="access-code">测评码</label><input id="access-code" class="text-input" type="text" placeholder="请输入测评码" autocomplete="off" />
+        <p class="form-error" id="code-error"></p><button class="primary-button full-button" data-action="verify-code">验证并开始</button>
+        <small class="modal-footnote">请使用购买或领取后获得的测评码。</small>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="feedback-modal" aria-hidden="true">
+      <div class="modal-card feedback-card" role="dialog" aria-modal="true" aria-labelledby="feedback-title">
+        <button class="modal-close" data-action="close-modal">×</button>
+        <div class="feedback-icon">♡</div><p class="eyebrow">THANK YOU</p><h2 id="feedback-title">谢谢你的真实反馈</h2>
+        <p>如果这份结果对你有帮助，欢迎在店铺留下真实体验，再联系客服发送评价截图，即可领取 <strong>1 元体验返现</strong>。不要求夸大或虚假评价，按你的真实感受反馈就好。</p>
+        <button class="primary-button full-button" data-action="close-modal">知道了</button>
+      </div>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

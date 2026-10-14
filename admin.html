@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b8066" />
+    <meta name="description" content="副业试跑站管理员后台" />
+    <title>副业试跑站 | 管理后台</title>
+    <link rel="stylesheet" href="admin.css" />
+  </head>
+  <body class="admin-page">
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="index.html" aria-label="返回用户端">
+          <span class="brand-mark">管</span>
+          <span><strong>副业试跑站</strong><small>独立管理后台</small></span>
+        </a>
+        <div class="topbar-note"><span class="live-dot"></span> 服务端码库</div>
+      </header>
+
+      <main>
+        <section class="admin-shell">
+          <div class="admin-heading">
+            <div>
+              <p class="eyebrow">ADMIN CONSOLE</p>
+              <h1>测评码管理后台</h1>
+              <p>批量生成、导出和查看测评码使用情况。</p>
+            </div>
+            <div class="admin-heading-actions">
+              <span class="session-email" id="session-email"></span>
+              <button class="ghost-button danger-button" id="logout-button" type="button" hidden>退出登录</button>
+            </div>
+          </div>
+
+          <div id="login-card" class="admin-login-card">
+            <div class="admin-lock">管</div>
+            <p class="eyebrow">PRIVATE AREA</p>
+            <h2>登录管理后台</h2>
+            <p>使用 Supabase Auth 管理员账号登录。账号和权限不再写入公开网页。</p>
+            <label class="field-label" for="email">管理员邮箱</label>
+            <input id="email" class="text-input" type="email" placeholder="admin@example.com" autocomplete="username" />
+            <label class="field-label" for="password">管理员密码</label>
+            <input id="password" class="text-input" type="password" placeholder="请输入密码" autocomplete="current-password" />
+            <p class="form-error" id="login-error"></p>
+            <button class="primary-button full-button" id="login-button" type="button">登录后台</button>
+          </div>
+
+          <div id="dashboard" class="admin-dashboard" hidden>
+            <div class="admin-stats">
+              <div class="admin-stat"><span>码库总数</span><strong id="stat-total">0</strong><small>已生成测评码</small></div>
+              <div class="admin-stat"><span>可用码</span><strong id="stat-available">0</strong><small>仍有剩余次数</small></div>
+              <div class="admin-stat"><span>剩余次数</span><strong id="stat-uses">0</strong><small>全部码合计</small></div>
+              <div class="admin-stat"><span>已使用</span><strong id="stat-used">0</strong><small>已消耗次数</small></div>
+            </div>
+
+            <div class="admin-toolbar">
+              <div>
+                <p class="eyebrow">GENERATE CODES</p>
+                <h2>批量发放测评码</h2>
+                <p>每个新码默认可测试 2 次，生成后可直接复制或导出。</p>
+              </div>
+              <div class="generate-controls">
+                <label><span>生成数量</span><input id="generate-count" class="small-input" type="number" min="1" max="500" value="10" /></label>
+                <label><span>码前缀</span><input id="generate-prefix" class="small-input prefix-input" type="text" maxlength="8" value="TRY" /></label>
+                <button class="primary-button" id="generate-button" type="button">生成测评码</button>
+              </div>
+            </div>
+
+            <div class="code-table-panel">
+              <div class="code-table-head">
+                <div><p class="eyebrow">CODE INVENTORY</p><h2>测评码库</h2></div>
+                <div class="table-actions">
+                  <button class="secondary-button" id="copy-button" type="button">复制可用码</button>
+                  <button class="ghost-button" id="csv-button" type="button">导出 CSV</button>
+                  <button class="ghost-button" id="txt-button" type="button">导出 TXT</button>
+                </div>
+              </div>
+              <div class="code-filter-row">
+                <input id="code-search" class="text-input" type="search" placeholder="搜索测评码" />
+                <select id="code-status" class="select-input">
+                  <option value="all">全部状态</option>
+                  <option value="available">可使用</option>
+                  <option value="used">已用完</option>
+                </select>
+              </div>
+              <div class="code-table-wrap">
+                <table class="code-table">
+                  <thead><tr><th>测评码</th><th>可用次数</th><th>已用次数</th><th>状态</th><th>生成时间</th><th>操作</th></tr></thead>
+                  <tbody id="code-table-body"></tbody>
+                </table>
+                <div class="empty-table" id="empty-state" hidden>还没有符合条件的测评码。</div>
+              </div>
+            </div>
+            <p class="admin-warning">正式运营时请定期更换管理员密码，并通过 Supabase Auth 管理员列表控制访问权限。</p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer"><span>副业试跑站 · 独立管理后台</span><a href="index.html">返回用户端</a></footer>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="admin.js"></script>
+  </body>
+</html>
