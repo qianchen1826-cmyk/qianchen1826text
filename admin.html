@@ -70,11 +70,13 @@
               <div class="code-table-head">
                 <div><p class="eyebrow">CODE INVENTORY</p><h2>测评码库</h2></div>
                 <div class="table-actions">
+                  <button class="ghost-button" id="refresh-button" type="button" aria-label="刷新测评码列表" title="刷新测评码列表">刷新</button>
                   <button class="secondary-button" id="copy-button" type="button">复制可用码</button>
                   <button class="ghost-button" id="csv-button" type="button">导出 CSV</button>
                   <button class="ghost-button" id="txt-button" type="button">导出 TXT</button>
                 </div>
               </div>
+              <p class="inventory-status" id="inventory-status" role="status"></p>
               <div class="code-filter-row">
                 <input id="code-search" class="text-input" type="search" placeholder="搜索测评码" />
                 <select id="code-status" class="select-input">

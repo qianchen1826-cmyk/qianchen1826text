@@ -2,6 +2,8 @@ const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 
 let inventory = [];
+let inventoryLoading = false;
+let generating = false;
 
 function client() {
   return window.getSupabaseClient?.();
@@ -32,10 +34,25 @@ function setLoggedIn(session) {
 }
 
 async function loadInventory() {
-  const { data, error } = await client().from("access_codes").select("*").order("created_at", { ascending: false });
-  if (error) throw error;
-  inventory = data || [];
-  renderInventory();
+  if (inventoryLoading) return;
+  inventoryLoading = true;
+  const refreshButton = $("#refresh-button");
+  const status = $("#inventory-status");
+  refreshButton.disabled = true;
+  status.textContent = "正在加载…";
+  try {
+    const { data, error } = await client().from("access_codes").select("*").order("created_at", { ascending: false });
+    if (error) throw error;
+    inventory = data || [];
+    renderInventory();
+    status.textContent = `已载入 ${inventory.length} 个测评码 · 更新于 ${formatDate(new Date().toISOString())}`;
+  } catch (error) {
+    status.textContent = `刷新失败：${error.message || "连接失败"}`;
+    throw error;
+  } finally {
+    inventoryLoading = false;
+    refreshButton.disabled = false;
+  }
 }
 
 function renderInventory() {
@@ -95,16 +112,21 @@ function downloadText(content, filename, type) {
 }
 
 async function generateCodes() {
-  const count = Math.min(500, Math.max(1, Number($("#generate-count").value) || 1));
-  const prefix = ($("#generate-prefix").value || "TRY").toUpperCase();
-  const { error } = await client().rpc("generate_access_codes", {
-    p_count: count,
-    p_prefix: prefix,
-    p_max_uses: 2,
-  });
-  if (error) throw error;
-  await loadInventory();
-  showToast(`已生成 ${count} 个测评码，每个可用 2 次`);
+  if (generating || inventoryLoading) return;
+  generating = true;
+  $("#generate-button").disabled = true;
+  try {
+    const count = Math.min(500, Math.max(1, Math.trunc(Number($("#generate-count").value) || 1)));
+    const prefix = ($("#generate-prefix").value || "TRY").toUpperCase();
+    const { error } = await client().rpc("generate_access_codes", {
+      p_count: count,
+      p_prefix: prefix,
+      p_max_uses: 2,
+    });
+    if (error) throw error;
+    await loadInventory();
+    showToast(`已生成 ${count} 个测评码，每个可用 2 次`);
+  } finally { generating = false; $("#generate-button").disabled = false; }
 }
 
 async function copyAvailableCodes() {
@@ -178,6 +200,7 @@ $("#login-button").addEventListener("click", () => login().catch((error) => { $(
 $("#password").addEventListener("keydown", (event) => { if (event.key === "Enter") login(); });
 $("#logout-button").addEventListener("click", async () => { await client().auth.signOut(); setLoggedIn(null); });
 $("#generate-button").addEventListener("click", () => generateCodes().catch((error) => showToast(error.message)));
+$("#refresh-button").addEventListener("click", () => loadInventory().catch((error) => showToast(error.message)));
 $("#copy-button").addEventListener("click", () => copyAvailableCodes().catch((error) => showToast(error.message)));
 $("#csv-button").addEventListener("click", () => exportCodes("csv"));
 $("#txt-button").addEventListener("click", () => exportCodes("txt"));

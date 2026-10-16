@@ -21,6 +21,17 @@ html { scroll-behavior: smooth; }
 body { min-width: 320px; margin: 0; overflow-x: hidden; background: var(--paper); }
 button, input { font: inherit; }
 button { cursor: pointer; }
+[hidden] { display: none !important; }
+button:disabled { cursor: not-allowed; opacity: .6; transform: none; }
+.hero-lookup, .hero-resume { margin-top: 12px; margin-right: 8px; }
+.modal-card { max-height: calc(100dvh - 40px); overflow-y: auto; }
+.result-save-status { color: var(--muted); font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; }
+.result-save-status.success { color: var(--green); }
+.result-save-status.warning { color: #9b6532; }
+.result-key-panel { margin-top: 14px; padding: 18px; border: 1px solid var(--line); border-radius: 10px; background: #fbfdf9; }
+.result-key-panel span, .result-key-panel small { display: block; color: var(--muted); font-size: 12px; line-height: 1.8; }
+.result-key-panel code { display: block; margin: 8px 0; color: var(--green); font-size: 14px; overflow-wrap: anywhere; user-select: all; }
+.inventory-status { margin: 0 0 15px; color: var(--muted); font-size: 12px; line-height: 1.8; }
 
 .app-shell { min-height: 100vh; overflow: hidden; }
 .topbar {

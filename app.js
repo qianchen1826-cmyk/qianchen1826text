@@ -5,6 +5,10 @@ const state = {
   identity: null,
   report: null,
   filter: "全部",
+  redemptionId: null,
+  resultToken: null,
+  resultExpiresAt: null,
+  attempt: null,
 };
 
 const baseQuestions = [
@@ -525,6 +529,51 @@ const stageMeta = {
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
+const ATTEMPT_KEY = "tryout-attempt-v2";
+const PENDING_KEY = "tryout-redemption-v2";
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+let redeemBusy = false;
+let savePromise = null;
+let lookupBusy = false;
+
+function readStored(key, fallback = null) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+}
+
+function writeStored(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; }
+}
+
+function isReport(report) {
+  const strings = ["stage", "stageAdvice", "title", "share", "paragraph", "identity", "goal"];
+  const arrays = ["tags", "skills", "evidence", "risks", "projectIds"];
+  return Boolean(report && Object.hasOwn(roleMeta, report.role)
+    && Number.isFinite(report.confidence) && report.confidence >= 0 && report.confidence <= 100
+    && strings.every((key) => typeof report[key] === "string" && report[key].length < 10000)
+    && arrays.every((key) => Array.isArray(report[key]) && report[key].length <= 30
+      && report[key].every((value) => typeof value === "string" && value.length < 10000))
+    && report.evidence.length >= 3);
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+}
+
+function persistAttempt() {
+  if (!state.attempt) return;
+  state.attempt.answers = state.answers;
+  state.attempt.current = state.current;
+  if (!writeStored(ATTEMPT_KEY, state.attempt)) {
+    showToast("浏览器无法保存进度，请先保存结果长图，并允许本站使用本地存储。");
+  }
+  updateResumeButton();
+}
+
+function updateResumeButton() {
+  const button = $("#resume-button");
+  button.hidden = !state.attempt;
+  button.textContent = state.attempt?.report ? "查看本机上次结果" : "继续上次答题";
+}
 
 function selected(id) {
   const question = [...baseQuestions, ...(branchQuestions[state.identity] || []), ...commonQuestions, ...resourceQuestions].find((item) => item.id === id);
@@ -562,6 +611,7 @@ function renderQuestion() {
   `;
   $$(".option-button").forEach((button) => button.addEventListener("click", () => {
     state.answers[question.id] = question.options[Number(button.dataset.option)].value;
+    persistAttempt();
     renderQuestion();
   }));
   $("#prev-button").disabled = state.current === 0;
@@ -650,26 +700,28 @@ function buildReport() {
 }
 
 function renderReport(report = state.report) {
+  if (!isReport(report)) { showToast("报告数据不完整，无法显示。"); return; }
   state.report = report;
   const meta = roleMeta[report.role];
   const projectsToShow = report.projectIds.map((id) => projects.find((project) => project.id === id)).filter(Boolean);
   $("#primary-result").innerHTML = `
-    <div class="recommendation-top"><div><p class="eyebrow">你的结果 · ${report.stage}</p><h2>${report.title}</h2><p class="share-line">${report.share}</p></div><div class="match-score"><strong>${report.confidence}</strong><small>匹配度</small></div></div>
-    <div class="tag-row">${report.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}</div>
-    <p class="result-paragraph">${report.paragraph}</p>
-    <div class="recommendation-meta"><div><span>你的阶段</span><strong>${report.stage}</strong></div><div><span>建议起点</span><strong>先完成一个样例</strong></div><div><span>推荐数量</span><strong>最多 3 个方向</strong></div></div>
+    <div class="recommendation-top"><div><p class="eyebrow">你的结果 · ${escapeHtml(report.stage)}</p><h2>${escapeHtml(report.title)}</h2><p class="share-line">${escapeHtml(report.share)}</p></div><div class="match-score"><strong>${report.confidence}</strong><small>匹配度</small></div></div>
+    <div class="tag-row">${report.tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}</div>
+    <p class="result-paragraph">${escapeHtml(report.paragraph)}</p>
+    <div class="recommendation-meta"><div><span>你的阶段</span><strong>${escapeHtml(report.stage)}</strong></div><div><span>建议起点</span><strong>先完成一个样例</strong></div><div><span>推荐数量</span><strong>最多 3 个方向</strong></div></div>
   `;
   $("#evidence-grid").innerHTML = `
-    <article class="evidence-card"><span class="evidence-label">你已经掌握的能力</span><h3>${report.skills.join(" · ")}</h3><p>${report.evidence[1]}</p></article>
-    <article class="evidence-card"><span class="evidence-label">为什么这样判断</span><h3>${report.identity} → ${report.goal}</h3><p>${report.evidence[0]}。${report.evidence[2]}。</p></article>
+    <article class="evidence-card"><span class="evidence-label">你已经掌握的能力</span><h3>${report.skills.map(escapeHtml).join(" · ")}</h3><p>${escapeHtml(report.evidence[1])}</p></article>
+    <article class="evidence-card"><span class="evidence-label">为什么这样判断</span><h3>${escapeHtml(report.identity)} → ${escapeHtml(report.goal)}</h3><p>${escapeHtml(report.evidence[0])}。${escapeHtml(report.evidence[2])}。</p></article>
     <article class="evidence-card"><span class="evidence-label">理论提示</span><h3>兴趣 × 能力 × 现实资源</h3><p>这不是给你贴死标签，而是把职业兴趣、可迁移能力、自我效能和当前资源放在一起，寻找现在最容易迈出的那一步。</p></article>
   `;
   $("#secondary-results").innerHTML = projectsToShow.map((project) => `
     <article class="secondary-card"><div class="recommendation-top"><div><p class="eyebrow">${project.type}</p><h3>${project.title}</h3></div><span class="project-risk">${project.risk}</span></div><p>${project.description}</p><div class="tag-row">${project.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}</div><button class="text-action" data-project="${project.id}">查看试跑说明 →</button></article>
   `).join("");
-  $("#profile-summary").innerHTML = report.tags.map((tag, index) => `<div class="profile-item"><div><span>${["当前状态", "可用时间", "启动边界", "沟通方式"][index] || "现实标签"}</span><strong>${tag}</strong></div><div class="profile-track"><b style="width:${Math.max(48, report.confidence - index * 7)}%"></b></div></div>`).join("");
-  $("#risk-list").innerHTML = report.risks.map((risk) => `<li>${risk}</li>`).join("");
+  $("#profile-summary").innerHTML = report.tags.map((tag, index) => `<div class="profile-item"><div><span>${["当前状态", "可用时间", "启动边界", "沟通方式"][index] || "现实标签"}</span><strong>${escapeHtml(tag)}</strong></div><div class="profile-track"><b style="width:${Math.max(48, report.confidence - index * 7)}%"></b></div></div>`).join("");
+  $("#risk-list").innerHTML = report.risks.map((risk) => `<li>${escapeHtml(risk)}</li>`).join("");
   renderDays(report);
+  updateResultControls();
   $$(".text-action").forEach((button) => button.addEventListener("click", () => showToast("试跑说明和网盘资料入口将在后台配置后开放。")));
 }
 
@@ -686,17 +738,18 @@ function renderDays(report) {
   };
   const key = report.role in plans ? report.role : "explorer";
   const days = plans[key];
-  const done = JSON.parse(localStorage.getItem(`tryout-${report.role}`) || "[]");
+  const keyName = `tryout-days-${state.resultToken || state.redemptionId || report.role}`;
+  const stored = readStored(keyName, []);
+  const done = Array.isArray(stored) ? [...new Set(stored.filter((day) => Number.isInteger(day) && day >= 0 && day < 7))] : [];
   $("#day-grid").innerHTML = days.map((title, index) => `
-    <article class="day-card ${done.includes(index) ? "done" : ""}" data-day="${index}"><div class="day-head"><span class="day-label">DAY ${index + 1}</span><span class="day-check">${done.includes(index) ? "✓" : "○"}</span></div><strong>${title}</strong><p>${index === 0 ? report.stageAdvice : "完成后记一句真实反馈，别只记录收藏了什么。"}</p></article>
+    <article class="day-card ${done.includes(index) ? "done" : ""}" data-day="${index}"><div class="day-head"><span class="day-label">DAY ${index + 1}</span><span class="day-check">${done.includes(index) ? "✓" : "○"}</span></div><strong>${title}</strong><p>${index === 0 ? escapeHtml(report.stageAdvice) : "完成后记一句真实反馈，别只记录收藏了什么。"}</p></article>
   `).join("");
   updateCompletion(done);
   $$(".day-card").forEach((card) => card.addEventListener("click", () => {
     const day = Number(card.dataset.day);
-    const keyName = `tryout-${report.role}`;
-    const current = JSON.parse(localStorage.getItem(keyName) || "[]");
+    const current = done;
     const next = current.includes(day) ? current.filter((item) => item !== day) : [...current, day];
-    localStorage.setItem(keyName, JSON.stringify(next));
+    if (!writeStored(keyName, next)) showToast("浏览器无法保存打卡记录。");
     renderDays(report);
   }));
 }
@@ -726,6 +779,9 @@ function resetTest() {
   state.current = 0;
   state.identity = null;
   state.report = null;
+  state.resultToken = null;
+  state.resultExpiresAt = null;
+  setResultSaveStatus("");
   renderQuestion();
 }
 
@@ -735,6 +791,22 @@ function showToast(message) {
   toast.classList.add("show");
   clearTimeout(window.__toastTimer);
   window.__toastTimer = setTimeout(() => toast.classList.remove("show"), 2800);
+}
+
+function createRequestId() {
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+  const bytes = window.crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 15) | 64;
+  bytes[8] = (bytes[8] & 63) | 128;
+  const hex = [...bytes].map((value) => value.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+function setResultSaveStatus(message, tone = "") {
+  const status = $("#result-save-status");
+  if (!status) return;
+  status.textContent = message;
+  status.className = `result-save-status ${tone}`.trim();
 }
 
 function openModal(id) {
@@ -751,37 +823,207 @@ function closeModals() {
   });
 }
 
-async function redeemCode(code) {
+async function redeemCode(code, requestId) {
   const supabaseClient = window.getSupabaseClient?.();
   if (!supabaseClient) throw new Error("网站还没有配置 Supabase，请联系管理员。");
-  const { data, error } = await supabaseClient.rpc("redeem_access_code", { p_code: code });
+  const { data, error } = await supabaseClient.rpc("redeem_access_code", { p_code: code, p_request_id: requestId });
   if (error) throw error;
   return Array.isArray(data) ? data[0] : data;
 }
 
+async function redeemNewAttempt(code) {
+  let pending = readStored(PENDING_KEY);
+  if (pending && pending.code !== code) {
+    throw new Error("上次验证尚未确认，请先使用原测评码重试，避免重复扣次。");
+  }
+  if (!pending || !UUID_PATTERN.test(pending.requestId)) pending = { code, requestId: createRequestId() };
+  if (!writeStored(PENDING_KEY, pending)) {
+    throw new Error("浏览器无法保存验证记录，请允许本站使用本地存储后再开始。");
+  }
+  const requestId = pending.requestId;
+  const result = await redeemCode(code, requestId);
+  if (!result) { localStorage.removeItem(PENDING_KEY); return null; }
+  if (!UUID_PATTERN.test(result.redemption_id)) throw new Error("核销返回异常，请联系管理员。");
+  activateAttempt(code, requestId, result);
+  localStorage.removeItem(PENDING_KEY);
+  return result;
+}
+
+function activateAttempt(code, requestId, result) {
+  const attempt = { code, requestId, redemptionId: result.redemption_id, answers: {}, current: 0, report: null };
+  if (!writeStored(ATTEMPT_KEY, attempt)) throw new Error("进度保存失败，请使用相同测评码重试。");
+  state.attempt = attempt;
+  state.redemptionId = result.redemption_id;
+  resetTest();
+  updateResumeButton();
+}
+
+function restoreAttempt() {
+  if (lookupBusy || redeemBusy) { showToast("正在处理请求，请稍候再恢复进度。"); return; }
+  const attempt = state.attempt;
+  if (!attempt) return;
+  state.answers = attempt.answers;
+  buildQueue();
+  state.current = Math.max(0, Math.min(Number.isInteger(attempt.current) ? attempt.current : 0, state.queue.length - 1));
+  state.redemptionId = attempt.redemptionId;
+  state.resultToken = attempt.resultToken || null;
+  state.resultExpiresAt = attempt.expiresAt || null;
+  if (isReport(attempt.report)) {
+    renderReport(attempt.report);
+    showView("result");
+    if (!state.resultToken) saveAssessmentResult();
+  } else {
+    state.report = null;
+    renderQuestion();
+    showView("quiz");
+  }
+  closeModals();
+}
+
+function rpcMessage(error) {
+  if (["PGRST202", "PGRST203", "42883"].includes(error.code)) {
+    return "服务尚未升级，请联系管理员完成数据库更新。";
+  }
+  return error.message || "连接失败，请检查网络后重试。";
+}
+
 async function verifyCode() {
+  if (redeemBusy || lookupBusy) return;
   const input = $("#access-code");
   const code = input.value.trim().toUpperCase();
   const error = $("#code-error");
   error.textContent = "";
+  if (!code) { error.textContent = "请输入测评码。"; return; }
+  if (savePromise) { error.textContent = "正在保存上次结果，请稍候。"; return; }
+  if (state.attempt?.code === code) { restoreAttempt(); return; }
+  if (state.attempt?.report && !state.attempt.resultToken) {
+    error.textContent = "上次结果尚未保存到云端，请先查看本机上次结果并重试保存。"; return;
+  }
+  redeemBusy = true;
+  $("[data-action='verify-code']").disabled = true;
   try {
-    const result = await redeemCode(code);
+    const result = await redeemNewAttempt(code);
     if (!result) {
       error.textContent = "测评码无效或测试次数已用完。";
       return;
     }
   } catch (requestError) {
-    error.textContent = requestError.message || "验证失败，请稍后重试。";
+    error.textContent = rpcMessage(requestError);
     return;
+  } finally {
+    redeemBusy = false;
+    $("[data-action='verify-code']").disabled = false;
   }
-  sessionStorage.setItem("active-access-code", code);
   closeModals();
-  resetTest();
+  history.replaceState(null, "", window.location.pathname + window.location.search);
   showView("quiz");
 }
 
 function encodeShare(data) {
   return btoa(unescape(encodeURIComponent(JSON.stringify(data)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function updateResultControls() {
+  const own = state.attempt?.report === state.report;
+  const saved = Boolean(state.resultToken);
+  $("#result-token").textContent = state.resultToken || "尚未取得查询码";
+  $("[data-action='copy-result-key']").disabled = !saved;
+  $("[data-action='retry-save']").hidden = !own || saved;
+  $("[data-action='restart']").disabled = !own || Boolean(savePromise) || redeemBusy;
+  if (saved) {
+    const expired = Date.parse(state.resultExpiresAt) <= Date.now();
+    const date = new Date(state.resultExpiresAt).toLocaleString("zh-CN");
+    setResultSaveStatus(expired
+      ? "云端结果已过期，本机仍可查看和保存长图。"
+      : `结果已保存至云端，有效期至 ${date}。请保管测评码和结果查询码。`, expired ? "warning" : "success");
+  } else {
+    setResultSaveStatus(own ? "报告已保存在本机，等待上传云端。" : "这是旧版分享结果，可保存长图；没有云端查询码。", "warning");
+  }
+}
+
+async function saveAssessmentResult() {
+  if (savePromise) return savePromise;
+  const attempt = state.attempt;
+  if (!attempt?.report || attempt.report !== state.report || attempt.resultToken) return Boolean(attempt?.resultToken);
+  savePromise = Promise.resolve().then(async () => {
+    setResultSaveStatus("报告已保存在本机，正在上传云端…");
+    $("[data-action='retry-save']").disabled = true;
+    $("[data-action='restart']").disabled = true;
+    try {
+      const supabaseClient = window.getSupabaseClient?.();
+      if (!supabaseClient) throw new Error("网站尚未配置云端服务。");
+      const { data, error } = await supabaseClient.rpc("save_assessment_result", {
+        p_redemption_id: attempt.redemptionId, p_code: attempt.code,
+        p_request_id: attempt.requestId, p_payload: attempt.report,
+      });
+      if (error) throw error;
+      const result = Array.isArray(data) ? data[0] : data;
+      if (!UUID_PATTERN.test(result?.result_token) || !Number.isFinite(Date.parse(result?.expires_at))) {
+        throw new Error("云端返回的数据异常，请重试保存。");
+      }
+      attempt.resultToken = result.result_token;
+      attempt.expiresAt = result.expires_at;
+      const persisted = writeStored(ATTEMPT_KEY, attempt);
+      const days = readStored(`tryout-days-${attempt.redemptionId}`, []);
+      writeStored(`tryout-days-${result.result_token}`, days);
+      if (state.report === attempt.report) {
+        state.resultToken = result.result_token;
+        state.resultExpiresAt = result.expires_at;
+        updateResultControls();
+        renderDays(attempt.report);
+        if (!persisted) setResultSaveStatus("结果已保存到云端，但本机记录更新失败。请立即复制并保管查询码。", "warning");
+      }
+      return true;
+    } catch (error) {
+      if (state.report === attempt.report) setResultSaveStatus(`云端保存未完成：${rpcMessage(error)} 本机报告已保留，可点击重试保存。`, "warning");
+      return false;
+    } finally {
+      $("[data-action='retry-save']").disabled = false;
+      $("[data-action='restart']").disabled = state.attempt?.report !== state.report;
+      savePromise = null;
+    }
+  });
+  return savePromise;
+}
+
+async function lookupResult() {
+  if (lookupBusy || savePromise || redeemBusy) return;
+  const code = $("#lookup-code").value.trim().toUpperCase();
+  const token = $("#lookup-token").value.trim().toLowerCase();
+  const message = $("#lookup-error");
+  message.textContent = "";
+  if (!code || !UUID_PATTERN.test(token)) { message.textContent = "请输入测评码和完整的结果查询码。"; return; }
+  lookupBusy = true;
+  $("[data-action='lookup-result']").disabled = true;
+  try {
+    const supabaseClient = window.getSupabaseClient?.();
+    if (!supabaseClient) throw new Error("网站尚未配置云端服务。");
+    const { data, error } = await supabaseClient.rpc("get_assessment_result", { p_code: code, p_result_token: token });
+    if (error) throw error;
+    const result = Array.isArray(data) ? data[0] : data;
+    if (!result || Date.parse(result.expires_at) <= Date.now()) { message.textContent = "未找到有效结果，请核对测评码和查询码；云端结果保存 7 天。"; return; }
+    if (!isReport(result.payload) || !Number.isFinite(Date.parse(result.expires_at))) throw new Error("报告数据不完整，请联系管理员。");
+    state.redemptionId = null;
+    state.resultToken = token;
+    state.resultExpiresAt = result.expires_at;
+    renderReport(result.payload);
+    closeModals();
+    showView("result");
+  } catch (error) { message.textContent = rpcMessage(error); }
+  finally { lookupBusy = false; $("[data-action='lookup-result']").disabled = false; }
+}
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); }
+  catch {
+    const area = document.createElement("textarea");
+    area.value = text;
+    document.body.appendChild(area);
+    area.select();
+    const copied = document.execCommand("copy");
+    area.remove();
+    if (!copied) throw new Error("复制失败，请手动选择并复制。");
+  }
 }
 
 function decodeShare(value) {
@@ -795,6 +1037,14 @@ function decodeShare(value) {
 
 async function copyResultLink() {
   if (!state.report) return;
+  if (state.attempt?.report === state.report && !state.resultToken) await saveAssessmentResult();
+  if (state.resultToken) {
+    const url = `${window.location.href.split("#")[0]}#result=${state.resultToken}`;
+    try { await copyText(url); showToast("查询链接已复制，打开后仍需输入测评码。"); }
+    catch (error) { showToast(error.message); }
+    return;
+  }
+  if (state.attempt?.report === state.report) { showToast("请先完成云端保存，也可以先保存结果长图。"); return; }
   const data = { ...state.report, savedAt: new Date().toISOString() };
   const url = `${window.location.href.split("#")[0]}#report=${encodeShare(data)}`;
   try {
@@ -909,10 +1159,22 @@ function saveResultImage() {
 }
 
 function loadSharedReport() {
+  const token = window.location.hash.match(/^#result=([0-9a-f-]+)$/i)?.[1];
+  if (token && UUID_PATTERN.test(token)) {
+    $("#lookup-token").value = token;
+    openModal("lookup-modal");
+    return true;
+  }
   const value = window.location.hash.match(/^#report=(.+)$/)?.[1];
-  if (!value) return false;
+  if (!value) {
+    if (window.location.hash) { showToast("结果链接无效，请使用测评码和查询码查询。"); return true; }
+    return false;
+  }
   const report = decodeShare(value);
-  if (!report?.role || !roleMeta[report.role]) return false;
+  if (!isReport(report)) { showToast("结果链接无效或数据不完整。"); return true; }
+  state.redemptionId = null;
+  state.resultToken = null;
+  state.resultExpiresAt = null;
   renderReport(report);
   showView("result");
   return true;
@@ -926,13 +1188,24 @@ $$("[data-nav]").forEach((element) => element.addEventListener("click", (event) 
 }));
 
 $$("[data-action='start']").forEach((button) => button.addEventListener("click", () => openModal("code-modal")));
+$$("[data-action='resume']").forEach((button) => button.addEventListener("click", restoreAttempt));
+$$("[data-action='lookup-history']").forEach((button) => button.addEventListener("click", () => openModal("lookup-modal")));
+$$("[data-action='lookup-result']").forEach((button) => button.addEventListener("click", lookupResult));
+$$("[data-action='retry-save']").forEach((button) => button.addEventListener("click", saveAssessmentResult));
+$$("[data-action='copy-result-key']").forEach((button) => button.addEventListener("click", async () => {
+  if (!state.resultToken) return;
+  try { await copyText(state.resultToken); showToast("结果查询码已复制，请和测评码一起保管。"); }
+  catch (error) { showToast(error.message); }
+}));
+$("#lookup-token").addEventListener("keydown", (event) => { if (event.key === "Enter") lookupResult(); });
+$("#lookup-code").addEventListener("keydown", (event) => { if (event.key === "Enter") lookupResult(); });
 $$("[data-action='verify-code']").forEach((button) => button.addEventListener("click", verifyCode));
 $$("[data-action='close-modal']").forEach((button) => button.addEventListener("click", closeModals));
 $$(".modal-backdrop").forEach((modal) => modal.addEventListener("click", (event) => { if (event.target === modal) closeModals(); }));
 $("#access-code").addEventListener("keydown", (event) => { if (event.key === "Enter") verifyCode(); });
 
 $("#prev-button").addEventListener("click", () => {
-  if (state.current > 0) { state.current -= 1; renderQuestion(); }
+  if (state.current > 0) { state.current -= 1; persistAttempt(); renderQuestion(); }
 });
 
 $("#next-button").addEventListener("click", () => {
@@ -944,29 +1217,32 @@ $("#next-button").addEventListener("click", () => {
   }
   if (state.current < state.queue.length - 1) {
     state.current += 1;
+    persistAttempt();
     renderQuestion();
   } else {
     const report = buildReport();
+    if (!state.attempt) { showToast("请先输入测评码开始答题。"); return; }
+    state.attempt.report = report;
+    persistAttempt();
     renderReport(report);
     showView("result");
+    saveAssessmentResult();
   }
 });
 
 $$("[data-action='restart']").forEach((button) => button.addEventListener("click", async () => {
-  const code = sessionStorage.getItem("active-access-code");
-  if (code) {
-    try {
-      const result = await redeemCode(code);
-      if (!result) throw new Error("当前测评码次数已用完");
-      resetTest();
-      showView("quiz");
-      return;
-    } catch (error) {
-      showToast(error.message || "当前测评码次数已用完，请使用新的测评码。");
-      return;
-    }
-  }
-  showToast("当前测评码次数已用完，请使用新的测评码。");
+  if (redeemBusy || savePromise || lookupBusy || state.attempt?.report !== state.report) return;
+  if (!state.attempt.resultToken) { showToast("请先重试保存当前结果，再开始新测评。"); return; }
+  if (!window.confirm("再测一次会消耗该测评码的 1 次机会。请先保管当前结果查询码，确定继续吗？")) return;
+  redeemBusy = true;
+  $("[data-action='restart']").disabled = true;
+  try {
+    const result = await redeemNewAttempt(state.attempt.code);
+    if (!result) throw new Error("当前测评码次数已用完，请使用新的测评码。");
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+    showView("quiz");
+  } catch (error) { showToast(rpcMessage(error)); }
+  finally { redeemBusy = false; $("[data-action='restart']").disabled = false; }
 }));
 $$("[data-action='quit']").forEach((button) => button.addEventListener("click", () => showView("home")));
 $$("[data-action='save-image']").forEach((button) => button.addEventListener("click", saveResultImage));
@@ -985,4 +1261,20 @@ document.addEventListener("keydown", (event) => {
 
 renderQuestion();
 renderProjects();
-loadSharedReport();
+const storedAttempt = readStored(ATTEMPT_KEY);
+if (storedAttempt && typeof storedAttempt.code === "string"
+  && UUID_PATTERN.test(storedAttempt.requestId) && UUID_PATTERN.test(storedAttempt.redemptionId)
+  && storedAttempt.answers && typeof storedAttempt.answers === "object"
+  && !Array.isArray(storedAttempt.answers)
+  && (!storedAttempt.report || isReport(storedAttempt.report))) {
+  const allQuestions = [...baseQuestions, ...Object.values(branchQuestions).flat(), ...commonQuestions, ...resourceQuestions];
+  storedAttempt.answers = Object.fromEntries(Object.entries(storedAttempt.answers).filter(([id, value]) =>
+    allQuestions.some((question) => question.id === id && question.options.some((option) => option.value === value))));
+  if (!UUID_PATTERN.test(storedAttempt.resultToken) || !Number.isFinite(Date.parse(storedAttempt.expiresAt))) {
+    delete storedAttempt.resultToken;
+    delete storedAttempt.expiresAt;
+  }
+  state.attempt = storedAttempt;
+}
+updateResumeButton();
+if (!loadSharedReport() && state.attempt) restoreAttempt();
