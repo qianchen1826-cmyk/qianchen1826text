@@ -32,6 +32,9 @@ button:disabled { cursor: not-allowed; opacity: .6; transform: none; }
 .result-key-panel span, .result-key-panel small { display: block; color: var(--muted); font-size: 12px; line-height: 1.8; }
 .result-key-panel code { display: block; margin: 8px 0; color: var(--green); font-size: 14px; overflow-wrap: anywhere; user-select: all; }
 .inventory-status { margin: 0 0 15px; color: var(--muted); font-size: 12px; line-height: 1.8; }
+.resource-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+.resource-open-link { display: inline-flex; align-items: center; min-height: 38px; }
+.resource-code-button { padding: 8px 11px; color: var(--green); background: #f2faf6; border: 1px solid #cce4d8; border-radius: 6px; font-size: 12px; font-weight: 700; }
 
 .app-shell { min-height: 100vh; overflow: hidden; }
 .topbar {

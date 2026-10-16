@@ -535,6 +535,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 let redeemBusy = false;
 let savePromise = null;
 let lookupBusy = false;
+let resourceLoadVersion = 0;
 
 function readStored(key, fallback = null) {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
@@ -699,11 +700,53 @@ function buildReport() {
   };
 }
 
+function safeResourceUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" ? url.href : null;
+  } catch { return null; }
+}
+
+function renderReportProjects(report, resources = []) {
+  const configuredBySlot = new Map(resources.map((resource) => [Number(resource.slot), resource]));
+  const items = report.projectIds.slice(0, 3).map((projectId, index) => {
+    const project = projects.find((item) => item.id === projectId);
+    const resource = configuredBySlot.get(index + 1);
+    return { project, resource, url: safeResourceUrl(resource?.resource_url) };
+  }).filter((item) => item.project);
+  $("#secondary-results").innerHTML = items.map(({ project, resource, url }) => `
+    <article class="secondary-card"><div class="recommendation-top"><div><p class="eyebrow">${escapeHtml(project.type)}</p><h3>${escapeHtml(resource?.title || project.title)}</h3></div><span class="project-risk">${escapeHtml(project.risk)}</span></div><p>${escapeHtml(resource?.description || project.description)}</p><div class="tag-row">${project.tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}</div>${url
+      ? `<div class="resource-actions"><a class="text-action resource-open-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">打开百度网盘资料 →</a>${resource.access_code ? `<button class="resource-code-button" data-resource-code="${escapeHtml(resource.access_code)}" type="button">复制提取码 ${escapeHtml(resource.access_code)}</button>` : ""}</div>`
+      : `<button class="text-action" data-project="${escapeHtml(project.id)}" type="button">资料暂未启用</button>`}</article>
+  `).join("");
+  $("#secondary-results").querySelectorAll("[data-project]").forEach((button) => button.addEventListener("click", () => showToast("该结果的资料链接尚未在后台启用。")));
+  $("#secondary-results").querySelectorAll("[data-resource-code]").forEach((button) => button.addEventListener("click", async () => {
+    try { await copyText(button.dataset.resourceCode); showToast("提取码已复制。"); }
+    catch (error) { showToast(error.message); }
+  }));
+}
+
+async function loadResultResources(report) {
+  const version = ++resourceLoadVersion;
+  const supabaseClient = window.getSupabaseClient?.();
+  if (!supabaseClient) return;
+  try {
+    const { data, error } = await supabaseClient.from("result_resources")
+      .select("slot,project_id,title,description,resource_url,access_code")
+      .eq("result_role", report.role)
+      .eq("is_enabled", true)
+      .order("slot", { ascending: true });
+    if (error) throw error;
+    if (version === resourceLoadVersion && state.report === report) renderReportProjects(report, data || []);
+  } catch (error) {
+    console.warn("Result resources unavailable:", error.message || error);
+  }
+}
+
 function renderReport(report = state.report) {
   if (!isReport(report)) { showToast("报告数据不完整，无法显示。"); return; }
   state.report = report;
   const meta = roleMeta[report.role];
-  const projectsToShow = report.projectIds.map((id) => projects.find((project) => project.id === id)).filter(Boolean);
   $("#primary-result").innerHTML = `
     <div class="recommendation-top"><div><p class="eyebrow">你的结果 · ${escapeHtml(report.stage)}</p><h2>${escapeHtml(report.title)}</h2><p class="share-line">${escapeHtml(report.share)}</p></div><div class="match-score"><strong>${report.confidence}</strong><small>匹配度</small></div></div>
     <div class="tag-row">${report.tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}</div>
@@ -715,14 +758,12 @@ function renderReport(report = state.report) {
     <article class="evidence-card"><span class="evidence-label">为什么这样判断</span><h3>${escapeHtml(report.identity)} → ${escapeHtml(report.goal)}</h3><p>${escapeHtml(report.evidence[0])}。${escapeHtml(report.evidence[2])}。</p></article>
     <article class="evidence-card"><span class="evidence-label">理论提示</span><h3>兴趣 × 能力 × 现实资源</h3><p>这不是给你贴死标签，而是把职业兴趣、可迁移能力、自我效能和当前资源放在一起，寻找现在最容易迈出的那一步。</p></article>
   `;
-  $("#secondary-results").innerHTML = projectsToShow.map((project) => `
-    <article class="secondary-card"><div class="recommendation-top"><div><p class="eyebrow">${project.type}</p><h3>${project.title}</h3></div><span class="project-risk">${project.risk}</span></div><p>${project.description}</p><div class="tag-row">${project.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}</div><button class="text-action" data-project="${project.id}">查看试跑说明 →</button></article>
-  `).join("");
+  renderReportProjects(report);
+  loadResultResources(report);
   $("#profile-summary").innerHTML = report.tags.map((tag, index) => `<div class="profile-item"><div><span>${["当前状态", "可用时间", "启动边界", "沟通方式"][index] || "现实标签"}</span><strong>${escapeHtml(tag)}</strong></div><div class="profile-track"><b style="width:${Math.max(48, report.confidence - index * 7)}%"></b></div></div>`).join("");
   $("#risk-list").innerHTML = report.risks.map((risk) => `<li>${escapeHtml(risk)}</li>`).join("");
   renderDays(report);
   updateResultControls();
-  $$(".text-action").forEach((button) => button.addEventListener("click", () => showToast("试跑说明和网盘资料入口将在后台配置后开放。")));
 }
 
 function renderDays(report) {

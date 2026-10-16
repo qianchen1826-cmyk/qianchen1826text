@@ -4,6 +4,20 @@ const $$ = (selector) => [...document.querySelectorAll(selector)];
 let inventory = [];
 let inventoryLoading = false;
 let generating = false;
+let resourceConfig = [];
+let resourcesLoading = false;
+const savingResourceRoles = new Set();
+
+const resultDefinitions = [
+  { role: "organizer", title: "资料炼金师", projects: [["organize", "资料整理与工具清单"], ["support", "文档排版与虚拟助理"], ["workflow", "表格、模板与 AI 工作流"]] },
+  { role: "content", title: "内容翻译官", projects: [["copy", "商品文案与短内容"], ["portfolio", "目标岗位作品集"], ["affiliate", "合规内容联盟推广"]] },
+  { role: "visual", title: "视觉改造师", projects: [["visual", "商品图与基础剪辑"], ["copy", "商品文案与短内容"], ["portfolio", "目标岗位作品集"]] },
+  { role: "workflow", title: "流程搭建师", projects: [["workflow", "表格、模板与 AI 工作流"], ["organize", "资料整理与工具清单"], ["support", "文档排版与虚拟助理"]] },
+  { role: "connector", title: "需求捕手", projects: [["local", "本地商家内容代发"], ["copy", "商品文案与短内容"], ["affiliate", "合规内容联盟推广"]] },
+  { role: "executor", title: "稳定交付官", projects: [["support", "文档排版与虚拟助理"], ["organize", "资料整理与工具清单"], ["visual", "商品图与基础剪辑"]] },
+  { role: "portfolio", title: "作品突围者", projects: [["portfolio", "目标岗位作品集"], ["visual", "商品图与基础剪辑"], ["copy", "商品文案与短内容"]] },
+  { role: "explorer", title: "探索试跑者", projects: [["organize", "资料整理与工具清单"], ["copy", "商品文案与短内容"], ["visual", "商品图与基础剪辑"]] },
+];
 
 function client() {
   return window.getSupabaseClient?.();
@@ -23,6 +37,10 @@ function showToast(message) {
 
 function formatDate(iso) {
   return new Intl.DateTimeFormat("zh-CN", { dateStyle: "short", timeStyle: "short" }).format(new Date(iso));
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
 }
 
 function setLoggedIn(session) {
@@ -53,6 +71,98 @@ async function loadInventory() {
     inventoryLoading = false;
     refreshButton.disabled = false;
   }
+}
+
+function normalizedResourceRows(definition) {
+  return definition.projects.map(([projectId, defaultTitle], index) => {
+    const stored = resourceConfig.find((item) => item.result_role === definition.role && Number(item.slot) === index + 1);
+    return stored || {
+      result_role: definition.role, slot: index + 1, project_id: projectId, title: defaultTitle,
+      resource_url: "", access_code: "", is_enabled: false,
+    };
+  });
+}
+
+function renderResourceConfig() {
+  $("#resource-config-list").innerHTML = resultDefinitions.map((definition) => {
+    const rows = normalizedResourceRows(definition);
+    const slots = rows.map((row, index) =>
+      '<div class="resource-slot-row" data-resource-slot="' + (index + 1) + '">' +
+        '<span class="resource-slot-number">资料 ' + (index + 1) + '</span>' +
+        '<label class="resource-field"><span>项目名称</span><input class="text-input" data-resource-field="title" maxlength="100" value="' + escapeHtml(row.title) + '" /></label>' +
+        '<label class="resource-field"><span>百度网盘链接（必须以 https:// 开头）</span><input class="text-input" data-resource-field="resource_url" type="url" placeholder="https://pan.baidu.com/s/..." value="' + escapeHtml(row.resource_url || "") + '" /></label>' +
+        '<label class="resource-field"><span>提取码</span><input class="text-input" data-resource-field="access_code" maxlength="32" value="' + escapeHtml(row.access_code || "") + '" /></label>' +
+        '<label class="resource-enabled"><input data-resource-field="is_enabled" type="checkbox" ' + (row.is_enabled ? "checked" : "") + ' />启用</label>' +
+      '</div>').join("");
+    return '<section class="resource-result-block" data-resource-role="' + definition.role + '">' +
+      '<div class="resource-result-head"><div><h3>' + definition.title + '</h3><p>结果标识：' + definition.role + ' · 固定 3 个资料位</p></div>' +
+      '<button class="secondary-button resource-save-button" data-save-resources="' + definition.role + '" type="button">保存这组</button></div>' +
+      '<div class="resource-slot-grid">' + slots + '</div></section>';
+  }).join("");
+  $$('[data-save-resources]').forEach((button) => button.addEventListener("click", () => {
+    saveResourceGroup(button.dataset.saveResources).catch((error) => showToast(error.message));
+  }));
+}
+
+async function loadResourceConfig() {
+  if (resourcesLoading) return;
+  resourcesLoading = true;
+  const button = $("#resource-refresh-button");
+  const status = $("#resource-status");
+  button.disabled = true;
+  status.textContent = "正在加载结果资料配置…";
+  try {
+    const { data, error } = await client().from("result_resources").select("*").order("result_role", { ascending: true });
+    if (error) throw error;
+    resourceConfig = data || [];
+    renderResourceConfig();
+    status.textContent = "已载入 8 种结果、24 个资料位 · 更新于 " + formatDate(new Date().toISOString());
+  } catch (error) {
+    status.textContent = "资料配置加载失败：" + (error.message || "连接失败");
+    throw error;
+  } finally {
+    resourcesLoading = false;
+    button.disabled = false;
+  }
+}
+
+async function saveResourceGroup(role) {
+  if (savingResourceRoles.has(role)) return;
+  const definition = resultDefinitions.find((item) => item.role === role);
+  const block = $("[data-resource-role='" + role + "']");
+  if (!definition || !block) return;
+  const rows = [...block.querySelectorAll("[data-resource-slot]")].map((row, index) => {
+    const resourceUrl = row.querySelector("[data-resource-field='resource_url']").value.trim();
+    const enabled = row.querySelector("[data-resource-field='is_enabled']").checked;
+    if (resourceUrl && !/^https:\/\//i.test(resourceUrl)) throw new Error("资料 " + (index + 1) + " 的链接必须以 https:// 开头。");
+    if (enabled && !resourceUrl) throw new Error("资料 " + (index + 1) + " 已启用，请先填写链接。");
+    return {
+      result_role: role, slot: index + 1, project_id: definition.projects[index][0],
+      title: row.querySelector("[data-resource-field='title']").value.trim(),
+      resource_url: resourceUrl || null,
+      access_code: row.querySelector("[data-resource-field='access_code']").value.trim(),
+      is_enabled: enabled, updated_at: new Date().toISOString(),
+    };
+  });
+  if (rows.some((row) => !row.title)) throw new Error("项目名称不能为空。");
+  savingResourceRoles.add(role);
+  const button = block.querySelector("[data-save-resources]");
+  button.disabled = true;
+  try {
+    const { data, error } = await client().from("result_resources").upsert(rows, { onConflict: "result_role,slot" }).select();
+    if (error) throw error;
+    resourceConfig = resourceConfig.filter((item) => item.result_role !== role).concat(data || rows);
+    $("#resource-status").textContent = definition.title + "的 3 个资料位已保存。";
+    showToast(definition.title + "资料配置已保存");
+  } finally {
+    savingResourceRoles.delete(role);
+    const currentButton = $("[data-save-resources='" + role + "']");
+    if (currentButton) currentButton.disabled = false;
+  }
+}
+
+async function loadDashboard() {
+  await Promise.all([loadInventory(), loadResourceConfig()]);
 }
 
 function renderInventory() {
@@ -175,7 +285,7 @@ async function login() {
   }
   setLoggedIn(data.session);
   try {
-    await loadInventory();
+    await loadDashboard();
   } catch (loadError) {
     $("#login-error").textContent = loadError.message;
     await client().auth.signOut();
@@ -191,7 +301,7 @@ async function init() {
   const { data } = await client().auth.getSession();
   setLoggedIn(data.session);
   if (data.session) {
-    try { await loadInventory(); } catch (error) { showToast(error.message); }
+    try { await loadDashboard(); } catch (error) { showToast(error.message); }
   }
   client().auth.onAuthStateChange((_event, session) => setLoggedIn(session));
 }
@@ -201,6 +311,7 @@ $("#password").addEventListener("keydown", (event) => { if (event.key === "Enter
 $("#logout-button").addEventListener("click", async () => { await client().auth.signOut(); setLoggedIn(null); });
 $("#generate-button").addEventListener("click", () => generateCodes().catch((error) => showToast(error.message)));
 $("#refresh-button").addEventListener("click", () => loadInventory().catch((error) => showToast(error.message)));
+$("#resource-refresh-button").addEventListener("click", () => loadResourceConfig().catch((error) => showToast(error.message)));
 $("#copy-button").addEventListener("click", () => copyAvailableCodes().catch((error) => showToast(error.message)));
 $("#csv-button").addEventListener("click", () => exportCodes("csv"));
 $("#txt-button").addEventListener("click", () => exportCodes("txt"));
