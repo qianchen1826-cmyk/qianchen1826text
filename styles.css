@@ -188,6 +188,16 @@ h2 { margin-bottom: 9px; font-size: clamp(25px, 3vw, 36px); letter-spacing: -.04
 .secondary-card .tag-row { margin-top: auto; }
 .secondary-score, .project-risk { color: var(--green); font-size: 11px; font-weight: 800; }
 .text-action { align-self: flex-start; padding: 0; color: var(--green); background: transparent; border: 0; font-size: 12px; font-weight: 800; }
+.more-projects-section {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 28px;
+  margin-top: 38px; padding: 27px 30px; background: #fff8e9; border: 1px solid #efdcae; border-left: 4px solid var(--yellow); border-radius: 8px;
+}
+.more-projects-copy { min-width: 0; }
+.more-projects-section .eyebrow { margin-bottom: 8px; color: #9b6532; }
+.more-projects-section h2 { margin: 0 0 8px; font-size: 22px; }
+.more-projects-section p:not(.eyebrow) { max-width: 760px; margin: 0; color: #746b58; font-size: 13px; line-height: 1.8; }
+.more-projects-actions { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 9px; }
+.more-projects-actions .primary-button { white-space: nowrap; }
 .run-section { margin-top: 50px; padding: 32px; background: #e7f3eb; border: 1px solid #d1e5d8; border-radius: 12px; }
 .completion-label { color: var(--green); font-size: 12px; font-weight: 800; }
 .run-progress { margin: 7px 0 22px; background: #d2e5d9; }
@@ -337,6 +347,9 @@ h2 { margin-bottom: 9px; font-size: clamp(25px, 3vw, 36px); letter-spacing: -.04
   .recommendation-top { align-items: start; }
   .recommendation-card h2 { font-size: 28px; }
   .recommendation-meta { gap: 12px; }
+  .more-projects-section { grid-template-columns: 1fr; padding: 23px 20px; }
+  .more-projects-actions { justify-content: flex-start; }
+  .more-projects-actions .primary-button { width: 100%; }
   .run-section { padding: 22px 17px; }
   .day-grid { grid-template-columns: repeat(2, 1fr); }
   .day-card { min-height: 145px; }

@@ -59,6 +59,9 @@ body.admin-page {
 .resource-enabled { display: flex; align-items: center; gap: 7px; min-height: 43px; color: var(--ink); font-size: 12px; }
 .resource-enabled input { width: 17px; height: 17px; accent-color: var(--green); }
 .resource-save-button { min-width: 86px; }
+.extra-resource-form { display: grid; grid-template-columns: minmax(150px, .8fr) minmax(220px, 1.4fr) minmax(110px, .5fr) 110px; align-items: end; gap: 12px; padding-top: 18px; border-top: 1px solid var(--line); }
+.extra-description-field, .extra-url-field { grid-column: span 2; }
+.resource-field textarea { width: 100%; min-height: 88px; resize: vertical; line-height: 1.6; }
 
 @media (max-width: 600px) {
   .admin-page main {
@@ -71,4 +74,8 @@ body.admin-page {
   .resource-slot-number { padding-top: 14px; }
   .resource-field, .resource-enabled { grid-column: 2; }
   .resource-save-button { width: 100%; }
+  .extra-resource-form { grid-template-columns: minmax(0, 1fr); }
+  .extra-resource-form > * { grid-column: 1 / -1; min-width: 0; }
+  .extra-resource-form .resource-enabled { justify-self: start; }
+  .extra-resource-form .resource-field textarea { box-sizing: border-box; width: 100%; }
 }

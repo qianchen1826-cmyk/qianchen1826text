@@ -726,18 +726,48 @@ function renderReportProjects(report, resources = []) {
   }));
 }
 
+function renderMoreProjectsResource(resource) {
+  const section = $("#more-projects-section");
+  const url = safeResourceUrl(resource?.resource_url);
+  if (!resource || !url) {
+    section.hidden = true;
+    section.innerHTML = "";
+    return;
+  }
+  section.innerHTML = `
+    <div class="more-projects-copy"><p class="eyebrow">MORE OPTIONS</p><h2>${escapeHtml(resource.title)}</h2><p>${escapeHtml(resource.description)}</p></div>
+    <div class="more-projects-actions"><a class="primary-button" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(resource.button_label)}</a>${resource.access_code ? `<button class="resource-code-button" data-extra-resource-code="${escapeHtml(resource.access_code)}" type="button">复制提取码 ${escapeHtml(resource.access_code)}</button>` : ""}</div>
+  `;
+  section.hidden = false;
+  section.querySelector("[data-extra-resource-code]")?.addEventListener("click", async (event) => {
+    try { await copyText(event.currentTarget.dataset.extraResourceCode); showToast("提取码已复制。"); }
+    catch (error) { showToast(error.message); }
+  });
+}
+
 async function loadResultResources(report) {
   const version = ++resourceLoadVersion;
   const supabaseClient = window.getSupabaseClient?.();
   if (!supabaseClient) return;
   try {
-    const { data, error } = await supabaseClient.from("result_resources")
-      .select("slot,project_id,title,description,resource_url,access_code")
-      .eq("result_role", report.role)
-      .eq("is_enabled", true)
-      .order("slot", { ascending: true });
-    if (error) throw error;
-    if (version === resourceLoadVersion && state.report === report) renderReportProjects(report, data || []);
+    const [resourcesResult, extraResult] = await Promise.all([
+      supabaseClient.from("result_resources")
+        .select("slot,project_id,title,description,resource_url,access_code")
+        .eq("result_role", report.role)
+        .eq("is_enabled", true)
+        .order("slot", { ascending: true }),
+      supabaseClient.from("report_extra_resources")
+        .select("title,description,button_label,resource_url,access_code")
+        .eq("resource_key", "more-projects")
+        .eq("is_enabled", true)
+        .maybeSingle(),
+    ]);
+    if (version === resourceLoadVersion && state.report === report) {
+      if (resourcesResult.error) console.warn("Result resources unavailable:", resourcesResult.error.message || resourcesResult.error);
+      else renderReportProjects(report, resourcesResult.data || []);
+      if (extraResult.error) console.warn("Extra report resource unavailable:", extraResult.error.message || extraResult.error);
+      else renderMoreProjectsResource(extraResult.data);
+    }
   } catch (error) {
     console.warn("Result resources unavailable:", error.message || error);
   }
@@ -759,6 +789,7 @@ function renderReport(report = state.report) {
     <article class="evidence-card"><span class="evidence-label">理论提示</span><h3>兴趣 × 能力 × 现实资源</h3><p>这不是给你贴死标签，而是把职业兴趣、可迁移能力、自我效能和当前资源放在一起，寻找现在最容易迈出的那一步。</p></article>
   `;
   renderReportProjects(report);
+  renderMoreProjectsResource(null);
   loadResultResources(report);
   $("#profile-summary").innerHTML = report.tags.map((tag, index) => `<div class="profile-item"><div><span>${["当前状态", "可用时间", "启动边界", "沟通方式"][index] || "现实标签"}</span><strong>${escapeHtml(tag)}</strong></div><div class="profile-track"><b style="width:${Math.max(48, report.confidence - index * 7)}%"></b></div></div>`).join("");
   $("#risk-list").innerHTML = report.risks.map((risk) => `<li>${escapeHtml(risk)}</li>`).join("");

@@ -6,7 +6,18 @@ let inventoryLoading = false;
 let generating = false;
 let resourceConfig = [];
 let resourcesLoading = false;
+let extraResourceLoading = false;
+let extraResourceSaving = false;
 const savingResourceRoles = new Set();
+const defaultExtraResource = {
+  resource_key: "more-projects",
+  title: "更多热门项目合集",
+  description: "如果觉得以上三个项目都没有合适的，可以看看我们整理好的几百个热门项目，希望对你有帮助。",
+  button_label: "查看热门项目合集",
+  resource_url: "",
+  access_code: "",
+  is_enabled: false,
+};
 
 const resultDefinitions = [
   { role: "organizer", title: "资料炼金师", projects: [["organize", "资料整理与工具清单"], ["support", "文档排版与虚拟助理"], ["workflow", "表格、模板与 AI 工作流"]] },
@@ -104,6 +115,65 @@ function renderResourceConfig() {
   }));
 }
 
+function renderExtraResourceConfig(resource = defaultExtraResource) {
+  const form = $("#extra-resource-form");
+  ["title", "description", "button_label", "resource_url", "access_code"].forEach((field) => {
+    form.querySelector(`[data-extra-field='${field}']`).value = resource[field] || "";
+  });
+  form.querySelector("[data-extra-field='is_enabled']").checked = Boolean(resource.is_enabled);
+}
+
+async function loadExtraResourceConfig() {
+  if (extraResourceLoading) return;
+  extraResourceLoading = true;
+  const status = $("#extra-resource-status");
+  status.textContent = "正在加载更多热门项目配置…";
+  try {
+    const { data, error } = await client().from("report_extra_resources")
+      .select("*").eq("resource_key", "more-projects").maybeSingle();
+    if (error) throw error;
+    renderExtraResourceConfig(data || defaultExtraResource);
+    status.textContent = "配置已载入 · 更新于 " + formatDate(new Date().toISOString());
+  } catch (error) {
+    renderExtraResourceConfig();
+    status.textContent = "配置加载失败，请先执行 supabase-migration-v4.sql：" + (error.message || "连接失败");
+  } finally {
+    extraResourceLoading = false;
+  }
+}
+
+async function saveExtraResourceConfig() {
+  if (extraResourceSaving) return;
+  const form = $("#extra-resource-form");
+  const value = (field) => form.querySelector(`[data-extra-field='${field}']`).value.trim();
+  const resourceUrl = value("resource_url");
+  const enabled = form.querySelector("[data-extra-field='is_enabled']").checked;
+  if (!value("title")) throw new Error("板块标题不能为空。");
+  if (!value("description")) throw new Error("说明文字不能为空。");
+  if (!value("button_label")) throw new Error("按钮文字不能为空。");
+  if (resourceUrl && !/^https:\/\//i.test(resourceUrl)) throw new Error("百度网盘链接必须以 https:// 开头。");
+  if (enabled && !resourceUrl) throw new Error("已勾选启用，请先填写百度网盘链接。");
+  const record = {
+    resource_key: "more-projects", title: value("title"), description: value("description"),
+    button_label: value("button_label"), resource_url: resourceUrl || null,
+    access_code: value("access_code"), is_enabled: enabled, updated_at: new Date().toISOString(),
+  };
+  extraResourceSaving = true;
+  const button = $("#extra-resource-save-button");
+  button.disabled = true;
+  try {
+    const { data, error } = await client().from("report_extra_resources")
+      .upsert(record, { onConflict: "resource_key" }).select().single();
+    if (error) throw error;
+    renderExtraResourceConfig(data || record);
+    $("#extra-resource-status").textContent = "更多热门项目配置已保存。";
+    showToast("更多热门项目配置已保存");
+  } finally {
+    extraResourceSaving = false;
+    button.disabled = false;
+  }
+}
+
 async function loadResourceConfig() {
   if (resourcesLoading) return;
   resourcesLoading = true;
@@ -162,7 +232,7 @@ async function saveResourceGroup(role) {
 }
 
 async function loadDashboard() {
-  await Promise.all([loadInventory(), loadResourceConfig()]);
+  await Promise.all([loadInventory(), loadResourceConfig(), loadExtraResourceConfig()]);
 }
 
 function renderInventory() {
@@ -312,6 +382,7 @@ $("#logout-button").addEventListener("click", async () => { await client().auth.
 $("#generate-button").addEventListener("click", () => generateCodes().catch((error) => showToast(error.message)));
 $("#refresh-button").addEventListener("click", () => loadInventory().catch((error) => showToast(error.message)));
 $("#resource-refresh-button").addEventListener("click", () => loadResourceConfig().catch((error) => showToast(error.message)));
+$("#extra-resource-save-button").addEventListener("click", () => saveExtraResourceConfig().catch((error) => showToast(error.message)));
 $("#copy-button").addEventListener("click", () => copyAvailableCodes().catch((error) => showToast(error.message)));
 $("#csv-button").addEventListener("click", () => exportCodes("csv"));
 $("#txt-button").addEventListener("click", () => exportCodes("txt"));

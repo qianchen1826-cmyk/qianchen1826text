@@ -94,6 +94,26 @@
               </div>
             </div>
 
+            <section class="resource-config-panel" aria-labelledby="extra-resource-title">
+              <div class="code-table-head">
+                <div>
+                  <p class="eyebrow">MORE PROJECTS</p>
+                  <h2 id="extra-resource-title">更多热门项目配置</h2>
+                  <p>这条内容会显示在所有测评结果的 3 个推荐项目下方、7 天计划上方。</p>
+                </div>
+                <button class="secondary-button resource-save-button" id="extra-resource-save-button" type="button">保存配置</button>
+              </div>
+              <p class="inventory-status" id="extra-resource-status" role="status"></p>
+              <div class="extra-resource-form" id="extra-resource-form">
+                <label class="resource-field"><span>板块标题</span><input class="text-input" data-extra-field="title" maxlength="100" /></label>
+                <label class="resource-field extra-description-field"><span>说明文字</span><textarea class="text-input" data-extra-field="description" maxlength="500" rows="3"></textarea></label>
+                <label class="resource-field"><span>按钮文字</span><input class="text-input" data-extra-field="button_label" maxlength="40" /></label>
+                <label class="resource-field extra-url-field"><span>百度网盘链接（必须以 https:// 开头）</span><input class="text-input" data-extra-field="resource_url" type="url" placeholder="https://pan.baidu.com/s/..." /></label>
+                <label class="resource-field"><span>提取码</span><input class="text-input" data-extra-field="access_code" maxlength="32" /></label>
+                <label class="resource-enabled"><input data-extra-field="is_enabled" type="checkbox" />启用并显示</label>
+              </div>
+            </section>
+
             <section class="resource-config-panel" aria-labelledby="resource-config-title">
               <div class="code-table-head">
                 <div>
