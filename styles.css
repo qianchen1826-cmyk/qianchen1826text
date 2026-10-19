@@ -43,7 +43,7 @@ button:disabled { cursor: not-allowed; opacity: .6; transform: none; }
   border-bottom: 1px solid var(--line); backdrop-filter: blur(16px);
 }
 .brand { display: inline-flex; align-items: center; gap: 11px; color: var(--ink); text-decoration: none; }
-.brand-mark { display: grid; place-items: center; width: 37px; height: 37px; color: #fff; background: var(--green); border-radius: 10px 10px 10px 3px; font-size: 18px; font-weight: 800; }
+.brand-image { width: 37px; height: 37px; flex: 0 0 37px; object-fit: cover; object-position: center; border: 1px solid #d9e5df; border-radius: 10px 10px 10px 3px; }
 .brand strong, .brand small { display: block; }
 .brand strong { font-size: 15px; letter-spacing: .04em; }
 .brand small { margin-top: 3px; color: var(--muted); font-size: 11px; }

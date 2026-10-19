@@ -1176,7 +1176,7 @@ function saveResultImage() {
   ctx.fillRect(0, 0, width, 260);
   ctx.fillStyle = "#b7e2d0";
   ctx.font = "22px Microsoft YaHei";
-  ctx.fillText("副业试跑站 · 方向报告", 72, 72);
+  ctx.fillText("浅尘副业试跑站 · 方向报告", 72, 72);
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 56px Microsoft YaHei";
   ctx.fillText(meta.title, 72, 150);
@@ -1222,9 +1222,9 @@ function saveResultImage() {
   ctx.fillStyle = "#7e8d87";
   ctx.font = "20px Microsoft YaHei";
   ctx.fillText("本报告用于自我探索和低风险尝试，不构成收益承诺。", 72, 1770);
-  ctx.fillText("副业试跑站 · 先试 7 天，再决定要不要继续", 72, 1815);
+  ctx.fillText("浅尘副业试跑站 · 先试 7 天，再决定要不要继续", 72, 1815);
   const link = document.createElement("a");
-  link.download = `副业试跑站-${meta.title}-方向报告.png`;
+  link.download = `浅尘副业试跑站-${meta.title}-方向报告.png`;
   link.href = canvas.toDataURL("image/png");
   link.click();
   showToast("长图已生成，手机端可在下载/文件中保存到相册。");

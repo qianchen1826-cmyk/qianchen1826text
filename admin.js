@@ -329,14 +329,14 @@ function exportCodes(format) {
     formatDate(record.created_at),
   ]);
   if (format === "txt") {
-    downloadText(inventory.filter((record) => record.used_count < record.max_uses).map((record) => record.code).join("\n"), `副业试跑站-可用测评码-${Date.now()}.txt`, "text/plain;charset=utf-8");
+    downloadText(inventory.filter((record) => record.used_count < record.max_uses).map((record) => record.code).join("\n"), `浅尘副业试跑站-可用测评码-${Date.now()}.txt`, "text/plain;charset=utf-8");
     return;
   }
   const csv = "\uFEFF" + [
     ["测评码", "最大次数", "已用次数", "剩余次数", "状态", "生成时间"],
     ...rows,
   ].map((row) => row.map((item) => `"${String(item).replace(/"/g, '""')}"`).join(",")).join("\n");
-  downloadText(csv, `副业试跑站-测评码库-${Date.now()}.csv`, "text/csv;charset=utf-8");
+  downloadText(csv, `浅尘副业试跑站-测评码库-${Date.now()}.csv`, "text/csv;charset=utf-8");
 }
 
 async function login() {
