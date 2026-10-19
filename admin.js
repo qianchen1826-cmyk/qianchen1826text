@@ -20,14 +20,14 @@ const defaultExtraResource = {
 };
 
 const resultDefinitions = [
-  { role: "organizer", title: "资料炼金师", projects: [["organize", "资料整理与工具清单"], ["support", "文档排版与虚拟助理"], ["workflow", "表格、模板与 AI 工作流"]] },
-  { role: "content", title: "内容翻译官", projects: [["copy", "商品文案与短内容"], ["portfolio", "目标岗位作品集"], ["affiliate", "合规内容联盟推广"]] },
-  { role: "visual", title: "视觉改造师", projects: [["visual", "商品图与基础剪辑"], ["copy", "商品文案与短内容"], ["portfolio", "目标岗位作品集"]] },
-  { role: "workflow", title: "流程搭建师", projects: [["workflow", "表格、模板与 AI 工作流"], ["organize", "资料整理与工具清单"], ["support", "文档排版与虚拟助理"]] },
-  { role: "connector", title: "需求捕手", projects: [["local", "本地商家内容代发"], ["copy", "商品文案与短内容"], ["affiliate", "合规内容联盟推广"]] },
-  { role: "executor", title: "稳定交付官", projects: [["support", "文档排版与虚拟助理"], ["organize", "资料整理与工具清单"], ["visual", "商品图与基础剪辑"]] },
-  { role: "portfolio", title: "作品突围者", projects: [["portfolio", "目标岗位作品集"], ["visual", "商品图与基础剪辑"], ["copy", "商品文案与短内容"]] },
-  { role: "explorer", title: "探索试跑者", projects: [["organize", "资料整理与工具清单"], ["copy", "商品文案与短内容"], ["visual", "商品图与基础剪辑"]] },
+  { role: "organizer", title: "AI办公提效师", projects: [["organize", "AI赋能办公进阶课"], ["support", "图片表格识别提取工具"], ["workflow", "精美PPT案例实操"]] },
+  { role: "content", title: "内容增长策划师", projects: [["copy", "爆款内容IP增长实战"], ["affiliate", "AI带货视频从0到1"], ["visual", "剧本文案与短视频内容"]] },
+  { role: "visual", title: "短视频视觉创作者", projects: [["visual", "AI视频全能王"], ["organize", "短视频/图片/动图无水印下载工具"], ["copy", "精美PPT案例实操"]] },
+  { role: "workflow", title: "AI自动化流程师", projects: [["workflow", "Coze智能体训练营"], ["organize", "财务审计自动化"], ["support", "豆包电脑办公任务拉新3"]] },
+  { role: "connector", title: "引流成交运营师", projects: [["affiliate", "抖音评论区群聊玩法"], ["local", "外贸从0-1出海实战"], ["copy", "强付费转化特训课"]] },
+  { role: "executor", title: "实体商家运营师", projects: [["local", "实体商家商业IP打造"], ["support", "陪诊师获客实操"], ["affiliate", "抖音电商操盘实战"]] },
+  { role: "portfolio", title: "知识产品设计师", projects: [["portfolio", "课程开发实战"], ["copy", "知识IP变现营"], ["affiliate", "AI虚拟产品训练营"]] },
+  { role: "explorer", title: "副业项目探索者", projects: [["affiliate", "小红书虚拟电商1拖3"], ["portfolio", "人生系统思维"], ["visual", "AI小说暴利搞钱项目"]] },
 ];
 
 function client() {

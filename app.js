@@ -497,25 +497,25 @@ const resourceQuestions = [
 ];
 
 const projects = [
-  { id: "organize", type: "信息服务", title: "资料整理与工具清单", description: "把零散资料、工具和案例整理成别人能直接使用的清单或表格。", tags: ["低成本", "手机可做", "不露脸"], risk: "低风险试做" },
-  { id: "copy", type: "内容服务", title: "商品文案与短内容", description: "从标题、商品介绍和短视频脚本开始，用作品验证表达能力。", tags: ["低成本", "文字服务", "可远程"], risk: "低风险试做" },
-  { id: "visual", type: "技能服务", title: "商品图与基础剪辑", description: "先做 3 个主图、封面或短视频样例，再考虑接小任务。", tags: ["作品驱动", "电脑可做", "不必露脸"], risk: "低风险试做" },
-  { id: "workflow", type: "效率服务", title: "表格、模板与 AI 工作流", description: "为个人或小团队整理重复流程，制作可复用的模板和工作流。", tags: ["可积累", "电脑可做", "适合长期"], risk: "需持续学习" },
-  { id: "local", type: "本地服务", title: "本地商家内容代发", description: "帮助附近小店整理活动信息、制作基础内容并发布。", tags: ["沟通较多", "资源驱动", "可复购"], risk: "先明确交付" },
-  { id: "portfolio", type: "职业准备", title: "目标岗位作品集", description: "围绕目标岗位做 2—3 个案例，让能力从“我会”变成“我做过”。", tags: ["转行适合", "作品驱动", "低成本"], risk: "需要持续投入" },
-  { id: "support", type: "交付服务", title: "文档排版与虚拟助理", description: "处理文档、表格、资料上传、信息维护等明确交付任务。", tags: ["低沟通", "可远程", "低成本"], risk: "注意任务来源" },
-  { id: "affiliate", type: "推广尝试", title: "合规内容联盟推广", description: "通过公开内容和正规推广链接验证转化，不承诺固定收益。", tags: ["规则敏感", "需内容", "谨慎试做"], risk: "先核验规则" },
+  { id: "organize", type: "AI办公", title: "AI办公提效与工具应用", description: "用 AI 工具、办公软件和现成模板，减少重复操作，提升整理、写作、表格和汇报效率。", tags: ["AI办公", "低成本", "电脑可做"], risk: "先核验工具" },
+  { id: "copy", type: "内容增长", title: "内容选题、文案与 IP 增长", description: "围绕选题、标题、脚本和个人 IP，做出能发布、能复盘的内容样例。", tags: ["内容增长", "文字服务", "可远程"], risk: "先做样例" },
+  { id: "visual", type: "短视频视觉", title: "短视频与视觉内容制作", description: "用图片、剪辑、素材和基础包装制作短视频、封面或宣传内容。", tags: ["短视频", "作品驱动", "不必露脸"], risk: "注意版权" },
+  { id: "workflow", type: "AI自动化", title: "AI 智能体与自动化流程", description: "把重复任务拆成步骤，借助智能体、自动化或模板跑通一条可复用流程。", tags: ["AI自动化", "可积累", "电脑可做"], risk: "需要学习" },
+  { id: "local", type: "商家运营", title: "实体商家与电商运营", description: "围绕门店、平台店铺或服务商家，完成内容、获客、运营和复盘。", tags: ["商家运营", "沟通驱动", "可复购"], risk: "先明确交付" },
+  { id: "portfolio", type: "知识产品", title: "知识付费与课程产品", description: "把经验、课程、案例或方法整理成课程、资料包或知识产品。", tags: ["知识付费", "作品驱动", "长期积累"], risk: "需要持续投入" },
+  { id: "support", type: "业务交付", title: "具体业务获客与交付", description: "围绕陪诊、服务、客户沟通等明确场景，完成获客、跟进和交付。", tags: ["真实需求", "可交付", "需核验"], risk: "先确认规则" },
+  { id: "affiliate", type: "引流转化", title: "引流、转化与虚拟产品", description: "通过内容、平台渠道或虚拟产品测试流量和转化，先核验规则与成本。", tags: ["引流转化", "虚拟产品", "规则敏感"], risk: "先核验规则" },
 ];
 
 const roleMeta = {
-  organizer: { title: "资料炼金师", share: "把混乱变成清单的人", color: "#0b8066", projects: ["organize", "support", "workflow"], skills: ["信息筛选", "分类归纳", "任务拆解"] },
-  content: { title: "内容翻译官", share: "把复杂事情讲明白的人", color: "#b76838", projects: ["copy", "portfolio", "affiliate"], skills: ["文字表达", "受众意识", "内容改写"] },
-  visual: { title: "视觉改造师", share: "能让普通内容变得更好看的人", color: "#8766a8", projects: ["visual", "copy", "portfolio"], skills: ["基础审美", "图片排版", "作品呈现"] },
-  workflow: { title: "流程搭建师", share: "总想把重复工作变简单的人", color: "#3e7aa4", projects: ["workflow", "organize", "support"], skills: ["工具搜索", "流程拆分", "效率意识"] },
-  connector: { title: "需求捕手", share: "能发现别人真正需要什么的人", color: "#bb6b2b", projects: ["local", "copy", "affiliate"], skills: ["需求理解", "沟通推进", "服务说明"] },
-  executor: { title: "稳定交付官", share: "别人敢把事情交给的人", color: "#477857", projects: ["support", "organize", "visual"], skills: ["按时交付", "细节检查", "持续完成"] },
-  portfolio: { title: "作品突围者", share: "用作品证明自己，而不是只说我会的人", color: "#a15366", projects: ["portfolio", "visual", "copy"], skills: ["案例意识", "动手产出", "反馈迭代"] },
-  explorer: { title: "探索试跑者", share: "不是没有方向，只是还没真实试过的人", color: "#6f7a5b", projects: ["organize", "copy", "visual"], skills: ["开放探索", "自我观察", "低成本试错"] },
+  organizer: { title: "AI办公提效师", share: "把办公中的重复和混乱变简单的人", color: "#0b8066", projects: ["organize", "support", "workflow"], skills: ["信息整理", "工具应用", "任务拆解"] },
+  content: { title: "内容增长策划师", share: "把内容做成能被看见和传播的作品", color: "#b76838", projects: ["copy", "affiliate", "visual"], skills: ["选题表达", "受众意识", "内容迭代"] },
+  visual: { title: "短视频视觉创作者", share: "用画面和视频把想法变得更有吸引力", color: "#8766a8", projects: ["visual", "organize", "copy"], skills: ["画面审美", "剪辑包装", "作品呈现"] },
+  workflow: { title: "AI自动化流程师", share: "用智能体和自动化把复杂流程跑通", color: "#3e7aa4", projects: ["workflow", "organize", "support"], skills: ["流程拆分", "AI工具", "效率优化"] },
+  connector: { title: "引流成交运营师", share: "从平台和渠道找到需求并推动成交", color: "#bb6b2b", projects: ["affiliate", "local", "copy"], skills: ["需求理解", "渠道运营", "转化推进"] },
+  executor: { title: "实体商家运营师", share: "把具体业务按标准稳定落地并交付", color: "#477857", projects: ["local", "support", "affiliate"], skills: ["业务执行", "客户跟进", "稳定交付"] },
+  portfolio: { title: "知识产品设计师", share: "把经验和方法做成可展示的知识产品", color: "#a15366", projects: ["portfolio", "copy", "affiliate"], skills: ["案例提炼", "课程设计", "产品呈现"] },
+  explorer: { title: "副业项目探索者", share: "用低成本试跑找到更适合自己的项目", color: "#6f7a5b", projects: ["affiliate", "portfolio", "visual"], skills: ["方向比较", "低成本试错", "复盘选择"] },
 };
 
 const stageMeta = {
@@ -657,14 +657,14 @@ function getTags() {
 function evidenceForRole(role, scores) {
   const best = [...Object.entries(scores)].sort((a, b) => b[1] - a[1]).slice(0, 3);
   const evidenceMap = {
-    organizer: ["你在处理零散信息、比较选项和拆解任务时更容易进入状态", "你更看重把事情做清楚、做稳，而不是先追求热闹", "你适合把复杂问题整理成别人可以直接使用的结构"],
-    content: ["你对“怎么说别人更容易理解”比较敏感", "你愿意通过修改标题、表达和展示方式寻找更好的反馈", "你更适合从文字、脚本和内容服务这样的可展示产出开始"],
-    visual: ["你更容易从看得见的作品里获得反馈", "你对画面、排版、重点和呈现方式有直觉", "你适合先做出几个样例，而不是长期停留在收藏教程"],
-    workflow: ["你会注意重复劳动，也愿意研究工具和效率", "你能把一件事拆成步骤，并寻找模板、表格或自动化方法", "你适合把工具能力转化成可交付的流程和模板"],
-    connector: ["你不只是愿意聊天，还会继续追问对方真正需要什么", "你能在沟通、需求和交付之间推进事情", "你适合从小范围、边界清楚的服务或本地需求开始"],
-    executor: ["你更看重按约定完成，而不是把每件事包装得很复杂", "你适合标准明确、可以重复交付的任务", "你的优势需要通过连续完成和稳定反馈被看见"],
-    portfolio: ["你现在最需要的不是继续证明“我想做”，而是拿出“我做过”", "你对样例、作品和真实反馈的需求高于泛泛学习", "你适合用短周期作品建立转行或求职筹码"],
-    explorer: ["你的回答没有显示出单一方向压倒性领先", "这更像是信息很多、真实尝试还不够，而不是你没有能力", "你需要用一个低成本的小实验替代继续等待确定答案"],
+    organizer: ["你在整理信息、比较工具和拆解办公任务时更容易进入状态", "你更看重把事情做清楚、做稳，再用工具提升效率", "你适合从 AI 办公、表格处理和模板应用这类明确产出开始"],
+    content: ["你对“怎么说别人更容易理解和愿意继续看”比较敏感", "你愿意通过修改标题、脚本和展示方式寻找更好的反馈", "你适合从内容选题、IP 增长和短视频表达这样的产出开始"],
+    visual: ["你更容易从看得见的图片、视频和页面作品里获得反馈", "你对画面、排版、重点和呈现方式有直觉", "你适合先做出几个视觉样例，再逐步增加工具和题材"],
+    workflow: ["你会注意重复劳动，也愿意研究智能体、工具和自动化", "你能把一件事拆成步骤，并寻找可复用的流程", "你适合把 AI 工具能力转化成能落地的自动化方案"],
+    connector: ["你不只是愿意沟通，还会继续追问流量、客户和成交真正卡在哪里", "你能在渠道、需求、转化和交付之间推进事情", "你适合从平台引流、获客和转化类项目开始验证"],
+    executor: ["你更看重按约定完成，把具体业务真正落地", "你适合标准明确、可以持续跟进和交付的商家或服务项目", "你的优势需要通过真实客户、连续执行和稳定反馈被看见"],
+    portfolio: ["你现在最需要的不是继续证明“我想做”，而是拿出“我做过”的知识产品", "你对课程、案例、资料包和真实反馈的需求高于泛泛学习", "你适合用短周期作品建立知识付费或个人 IP 的筹码"],
+    explorer: ["你的回答没有显示出单一项目方向压倒性领先", "这更像是项目很多、真实试跑还不够，而不是你没有能力", "你需要用一个低成本的虚拟产品或 AI 项目实验替代继续等待确定答案"],
   };
   const direction = role === "explorer" ? evidenceMap.explorer : evidenceMap[best[0]?.[0]] || evidenceMap[role];
   return direction;
